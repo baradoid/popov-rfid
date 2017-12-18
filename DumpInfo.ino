@@ -86,8 +86,8 @@ void setup() {
     cardFirstTimeChecked[i] = -1;
   }
 
-  Timer1.initialize(25000);         // initialize timer1, and set a 1/2 second period
-  Timer1.attachInterrupt(callback);  // attaches callback() as a timer overflow interrupt
+  //Timer1.initialize(25000);         // initialize timer1, and set a 1/2 second period
+  //Timer1.attachInterrupt(callback);  // attaches callback() as a timer overflow interrupt
   
   //digitalWrite(9, LOW);
   //mfrc522_1.PCD_Init();   // Init MFRC522
@@ -168,15 +168,8 @@ void loop() {
     }
   }
 
+  callback();
 
-  if(ledInd>7)
-    ledInd = 0;
-  double L = pow(2, ledInd++); // вычисляем активный светодиод
-  int leds = round(L); // округляем число до целого
-  SPI.transfer(leds);
-  digitalWrite(RCK_PIN, HIGH);
-  delay(10);
-  digitalWrite(RCK_PIN, LOW);
 }
 
 void printUid(MFRC522::Uid *uid)
@@ -195,6 +188,7 @@ void printUid(MFRC522::Uid *uid)
 
 void callback()
 {     
+  int leds = 0;
   for(int i=0; i<DEV_NUM; i++){       
     switch(ledState[i]){
       case ena:
@@ -215,8 +209,24 @@ void callback()
         }
         break;
     }
-    digitalWrite(ledPinNump[i], bLedEna[i]);         
+    //digitalWrite(ledPinNump[i], bLedEna[i]);
+    if(bLedEna[i]==true)
+      leds |= (1>>i);
   }
+
+  
+  //if(ledInd>7)
+  //  ledInd = 0;
+  double L = pow(2, ledInd++); // вычисляем активный светодиод
+  //leds = round(L); // округляем число до целого
+  //leds = 0x0;
+//  Serial.print("leds=");
+//  Serial.print(leds, HEX);
+//  Serial.println();
+  SPI.transfer(leds);
+  digitalWrite(RCK_PIN, HIGH);
+  delay(1);
+  digitalWrite(RCK_PIN, LOW);
 }
 
 
