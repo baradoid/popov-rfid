@@ -43,10 +43,10 @@
 #define LED_BLINK_SLOW 1
 #define LED_BLINK_FAST 2
 
-#define DEV_NUM 7
+#define DEV_NUM 8
 //int ledState[devNum];
-byte ssPinNum[] =   {10, 9,  8,  7,  6,   5, 4};
-bool bDevEna[] = {false, false, false, false, false, false, false};
+byte ssPinNum[] =   {10, 9,  8,  7,  6, 5, 4, 3};
+bool bDevEna[] = {false, false, false, false, false, false, false, false};
 
 enum ELedState {ena, blink_slow, blink_fast};
 ELedState ledState[DEV_NUM];
@@ -98,7 +98,7 @@ void setup() {
   //Timer1.initialize(500000);         // initialize timer1, and set a 1/2 second period
   //Timer1.pwm(9, 512);                // setup pwm on pin 9, 50% duty cycle
   //Timer1.attachInterrupt(callback);  // attaches callback() as a timer overflow interrupt
-  delay(1000);
+  //delay(1000);
 }
 
 
@@ -146,10 +146,10 @@ void loop() {
           
           if(cardFirstTimeChecked[i] == -1){
             cardFirstTimeChecked[i] = millis();            
-            ledState[i] = blink_fast;
+            ledState[i] = blink_slow;
           }
           else if((millis() - cardFirstTimeChecked[i])>2000){
-            ledState[i] = blink_slow;            
+            ledState[i] = blink_fast;            
           }
         }
       }
@@ -166,9 +166,11 @@ void loop() {
         Serial.println(":off");
       }
     }
+    callback();
   }
 
-  callback();
+      
+
 
 }
 
@@ -192,17 +194,18 @@ void callback()
   for(int i=0; i<DEV_NUM; i++){       
     switch(ledState[i]){
       case ena:
-        bLedEna[i] = true;        
+        bLedEna[i] = true;    
+        //leds |= (1>>i);    
         break;
       case blink_slow:
-        if( (millis() - lastEnaTime[i]) > 250 ){
+        if( (millis() - lastEnaTime[i]) > 500 ){
           lastEnaTime[i] = millis(); 
           if(bLedEna[i]) bLedEna[i] = false;
           else bLedEna[i] = true;        
         }
       break;
       case blink_fast:
-        if( (millis() - lastEnaTime[i]) > 10 ){
+        if( (millis() - lastEnaTime[i]) > 100 ){
           lastEnaTime[i] = millis(); 
           if(bLedEna[i]) bLedEna[i] = false;
           else bLedEna[i] = true;        
@@ -210,19 +213,24 @@ void callback()
         break;
     }
     //digitalWrite(ledPinNump[i], bLedEna[i]);
-    if(bLedEna[i]==true)
-      leds |= (1>>i);
+     if(bLedEna[i]==true)
+        leds |= (1<<i);
   }
 
-  
-  //if(ledInd>7)
-  //  ledInd = 0;
+
+
+
+
   double L = pow(2, ledInd++); // вычисляем активный светодиод
   //leds = round(L); // округляем число до целого
   //leds = 0x0;
 //  Serial.print("leds=");
 //  Serial.print(leds, HEX);
 //  Serial.println();
+//  leds <<=1;
+//  if(leds>256)
+//    leds = 1;
+  //leds = (1<<iNum);
   SPI.transfer(leds);
   digitalWrite(RCK_PIN, HIGH);
   delay(1);
