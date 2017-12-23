@@ -167,12 +167,8 @@ void loop() {
         Serial.println(":off");
       }
     }
-    processLeds()
+    processLeds();
   }
-
-      
-
-
 }
 
 void printUid(MFRC522::Uid *uid)
