@@ -48,12 +48,12 @@
 byte ssPinNum[] =   {10, 9,  8,  7,  6, 5, 4, 3};
 bool bDevEna[] = {false, false, false, false, false, false, false, false};
 
-enum ELedState {ena, blink_slow, blink_fast};
+enum ELedState {ena, blink_slow, blink_fast, disable};
 ELedState ledState[DEV_NUM];
 unsigned long lastEnaTime[DEV_NUM];
 bool bLedEna[DEV_NUM];
 
-byte ledPinNump[] = {13, 14, 16, 17, 18, 19, 2};
+//byte ledPinNump[] = {13, 14, 16, 17, 18, 19, 2};
 
 long cardFirstTimeChecked[DEV_NUM];
 
@@ -79,10 +79,10 @@ void setup() {
   SPI.begin();      // Init SPI bus
 
   for (int i = 0; i < DEV_NUM; i++) {
-    ledState[i] = ena;
+    ledState[i] = disable;
     bLedEna[i] = true;
-    pinMode(ledPinNump[i], OUTPUT);  //Led0
-    digitalWrite(ledPinNump[i], HIGH);
+//    pinMode(ledPinNump[i], OUTPUT);  //Led0
+//    digitalWrite(ledPinNump[i], HIGH);
     cardFirstTimeChecked[i] = -1;
   }
 
@@ -136,6 +136,7 @@ void loop() {
         Serial.print(i, HEX);
         Serial.println(":on");
       }
+            
       if (mfrc522.PICC_IsNewCardPresent()) {
         if (mfrc522.PICC_ReadCardSerial()) {
           //Serial.print(millis());
@@ -159,14 +160,14 @@ void loop() {
       }
     }
     else {
-      ledState[i] = ena;      
+      ledState[i] = disable;
       if (bDevEna[i] == true) {
         bDevEna[i] = false;
         Serial.print(i, HEX);
         Serial.println(":off");
       }
     }
-    callback();
+    processLeds()
   }
 
       
@@ -188,15 +189,13 @@ void printUid(MFRC522::Uid *uid)
   Serial.println();
 }
 
-void callback()
+void processLeds()
 {     
   int leds = 0;
   for(int i=0; i<DEV_NUM; i++){       
     switch(ledState[i]){
-      case ena:
-        bLedEna[i] = true;    
-        //leds |= (1>>i);    
-        break;
+      case disable: bLedEna[i] = false; break;
+      case ena:     bLedEna[i] = true;  break;
       case blink_slow:
         if( (millis() - lastEnaTime[i]) > 500 ){
           lastEnaTime[i] = millis(); 
@@ -217,13 +216,9 @@ void callback()
         leds |= (1<<i);
   }
 
-
-
-
-
   double L = pow(2, ledInd++); // вычисляем активный светодиод
   //leds = round(L); // округляем число до целого
-  //leds = 0x0;
+//  leds = 0x0;
 //  Serial.print("leds=");
 //  Serial.print(leds, HEX);
 //  Serial.println();
